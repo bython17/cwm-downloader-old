@@ -42,7 +42,7 @@ class Course:
         return resource_title
 
     def make_lecture_soup(self, lecture_id):
-        lecture_url = f'{self.course_url}{utils.slash[utils.OS]}lectures{utils.slash[utils.OS]}{lecture_id}'
+        lecture_url = f'{self.course_url}/lectures/{lecture_id}'
         return utils.make_soup(lecture_url, headers=headers, cookies=cookies)
 
     def get_lecture_download_url(self, lecture_id):
@@ -109,8 +109,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    course = Course(args.courseUrl, args.destinationDir)
-    if args.lectureId:
-        course.download_lecture(args.lectureId)
-    else:
-        course.download_lectures(args.fromIndex - 1, args.toIndex)
+    try:
+        course = Course(args.courseUrl, args.destinationDir)
+        if args.lectureId:
+            course.download_lecture(args.lectureId)
+        else:
+            course.download_lectures(args.fromIndex - 1, args.toIndex)
+    except Exception as e:
+        print("An Error Occured: ", e)
