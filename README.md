@@ -68,4 +68,4 @@ pyinstaller --noconfirm --onefile --console main.py
 
 ### Tip
 
-Add the destination directory to `PATH` or move the binary to a directory that is already added to the `PATH`
+Add the destination directory to `PATH` or move the binary to a directory that is already added to the `PATH` in order to access the command from wherever you want.
