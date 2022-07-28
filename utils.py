@@ -2,6 +2,11 @@ import requests
 import shutil
 from tqdm.auto import tqdm
 from bs4 import BeautifulSoup
+from sys import platform
+from os import remove, path
+
+OS = platform[:3]
+slash = {'lin': '/', 'dar': '/', 'mac': '/', 'win': '\\'}
 
 
 def make_soup(url, headers={}, cookies={}):
@@ -12,21 +17,28 @@ def make_soup(url, headers={}, cookies={}):
 def save_text(text: str, output_file_name: str):
     with open(output_file_name, 'w') as file:
         file.write(text)
-    print(f"Finished downloading `{output_file_name.split('/')[-1]}`")
+    print(f"Finished downloading `{output_file_name.split(slash[OS])[-1]}`")
 
 
 def download(url: str, output_file_name):
-    description = output_file_name.split('/')[-1]
-    # make an HTTP request within a context manager
-    with requests.get(url, stream=True) as content:
+    description = output_file_name.split(slash[OS])[-1]
+    try:
+        # make an HTTP request within a context manager
+        with requests.get(url, stream=True) as content:
 
-        # check header to get content length, in bytes
-        total_length = int(content.headers.get("Content-Length"))
+            # check header to get content length, in bytes
+            total_length = int(content.headers.get("Content-Length"))
 
-        # implement progress bar via tqdm
-        with tqdm.wrapattr(content.raw, "read", total=total_length, desc=description) as raw:
+            # implement progress bar via tqdm
+            with tqdm.wrapattr(content.raw, "read", total=total_length, desc=description) as raw:
 
-            # save the output to a file
-            with open(output_file_name, 'wb') as output:
-                shutil.copyfileobj(raw, output)
+                # save the output to a file
+                with open(output_file_name, 'wb') as output:
+                    shutil.copyfileobj(raw, output)
+    except requests.exceptions.SSLError:
+        print("SSL error occured, retrying download...")
+        if path.isfile(output_file_name):
+            remove(output_file_name)
+        download(url, output_file_name)
+
     print(f"Finished downloading `{description}`")

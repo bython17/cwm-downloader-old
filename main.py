@@ -22,13 +22,17 @@ class Course:
 
         return f'{title} \n\n{content}'
 
+    def get_lecture_by_id(self, lecture_id):
+        return list(filter(lambda lect_a: lect_a.get("data-ss-lecture-id") == lecture_id, self.lectures))[0]
+
     def get_lecture_title(self, lecture_id):
-        lecture = list(filter(lambda lect_a: lect_a.get(
-            "data-ss-lecture-id") == lecture_id, self.lectures))[0]
+        lecture = self.get_lecture_by_id(lecture_id)
 
         lecture_title_list = list(filter(lambda string: string != '' and string != 'Start' and string != 'Preview', list(
             map(lambda el: el.strip(), lecture.text.strip().splitlines()))))
-        lecture_title = lecture_title_list[0]
+
+        # Remove numbers from the name
+        lecture_title = lecture_title_list[0].split('-')[1]
 
         return lecture_title
 
@@ -38,7 +42,7 @@ class Course:
         return resource_title
 
     def make_lecture_soup(self, lecture_id):
-        lecture_url = f'{self.course_url}/lectures/{lecture_id}'
+        lecture_url = f'{self.course_url}{utils.slash[utils.OS]}lectures{utils.slash[utils.OS]}{lecture_id}'
         return utils.make_soup(lecture_url, headers=headers, cookies=cookies)
 
     def get_lecture_download_url(self, lecture_id):
@@ -55,24 +59,26 @@ class Course:
         return True if icon is not None else False
 
     def download_lecture(self, lecture_id):
-        lecture_name = self.get_lecture_title(lecture_id)
-        resource_name = self.get_resource_title(lecture_id)
+        lecture_number = self.lectures.index(
+            self.get_lecture_by_id(lecture_id)) + 1
+        lecture_name = f"{lecture_number}-{self.get_lecture_title(lecture_id)}"
 
         if self.check_if_video(lecture_id):
             download_url = self.get_lecture_download_url(lecture_id)
             utils.download(
-                download_url, f"{self.destination_folder}/{lecture_name}.mp4")
+                download_url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4")
         else:
             lecture_text = self.save_lecture_text(lecture_id)
             utils.save_text(
-                lecture_text, f"{self.destination_folder}/{lecture_name}.md")
+                lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.md")
 
             # Download resource if available
             try:
+                resource_name = self.get_resource_title(lecture_id)
                 resource_download_url = self.get_lecture_download_url(
                     lecture_id)
                 utils.download(
-                    resource_download_url, f"{self.destination_folder}/Resource- {resource_name}")
+                    resource_download_url, f"{self.destination_folder}{utils.slash[utils.OS]}Resource- {resource_name}")
             except:
                 pass
 
@@ -86,7 +92,7 @@ class Course:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="CWM Course Downloader",
+        prog="CWM Downloader",
         description="Download courses from Mosh Hamedani")
 
     parser.add_argument('-c', '--courseUrl',
@@ -98,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument('--toIndex', default=-1, type=int,
                         help="End index of download")
     parser.add_argument('-d', '--destinationDir', default="./",
-                        help="The final destination folder")
+                        help="The final destination folder (if in windows make sure to double the `\`)")
     parser.add_argument('--version', action='version', version='%(prog)s 2.0')
 
     args = parser.parse_args()
