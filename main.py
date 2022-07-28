@@ -109,11 +109,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    try:
-        course = Course(args.courseUrl, args.destinationDir)
-        if args.lectureId:
-            course.download_lecture(args.lectureId)
-        else:
-            course.download_lectures(args.fromIndex - 1, args.toIndex)
-    except Exception as e:
-        print("An Error Occured: ", e)
+    course = Course(args.courseUrl, args.destinationDir)
+    if args.lectureId:
+        course.download_lecture(args.lectureId)
+    else:
+        course.download_lectures(args.fromIndex - 1, args.toIndex)
