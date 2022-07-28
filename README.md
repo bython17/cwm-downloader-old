@@ -30,13 +30,13 @@ To get the header and cookies dictionary
 
 4. Copy the cURL of the request
 
-![enter image description here](https://drive.google.com/uc?id=1Vlyed-H9NrAMsSVSsVLEC19M6WxW-eJV)
+![copying the cURL of a request](https://drive.google.com/uc?id=1Vlyed-H9NrAMsSVSsVLEC19M6WxW-eJV)
 
 5. Go to https://curlconvertor.com and paste the cURL (that you copied)
 
 6. From the site copy the generated cookies and headers dictionary
 
-![enter image description here](https://drive.google.com/uc?id=1CuZa3Z5krWYVV6o4kEYJf8o7q-B6J1fx)
+![copying the headers and cookies dictionaries](https://drive.google.com/uc?id=1zPgUTP0gjpE7T5671bO3zElpwvat5IyP)
 
 7. Create a `credentials.py` file in the same directory as the project source
 
