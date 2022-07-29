@@ -24,17 +24,16 @@ def download(url: str, output_file_name):
     description = output_file_name.split(slash[OS])[-1]
     try:
         # make an HTTP request within a context manager
-        with requests.get(url, stream=True) as content:
+        response = requests.get(url, stream=True, allow_redirects=True)
 
-            # check header to get content length, in bytes
-            total_length = int(content.headers.get("Content-Length"))
+        # check header to get content length, in bytes
+        total_length = int(response.headers.get("content-length", 0))
 
-            # implement progress bar via tqdm
-            with tqdm.wrapattr(content.raw, "read", total=total_length, desc=description) as raw:
+        # implement progress bar via tqdm
+        with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc=description) as fout:
+            for chunk in response.iter_content(chunk_size=4096):
+                fout.write(chunk)
 
-                # save the output to a file
-                with open(output_file_name, 'wb') as output:
-                    shutil.copyfileobj(raw, output)
     except requests.exceptions.SSLError:
         print("SSL error occured, retrying download...")
         if path.isfile(output_file_name):
