@@ -1,12 +1,15 @@
 import requests
-import shutil
 from tqdm.auto import tqdm
 from bs4 import BeautifulSoup
 from sys import platform
 from os import remove, path
+from urllib3.exceptions import InsecureRequestWarning
 
 OS = platform[:3]
 slash = {'lin': '/', 'dar': '/', 'mac': '/', 'win': '\\'}
+
+# Supress the download warning that appears when not verifying an ssl certificate
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
 def make_soup(url, headers={}, cookies={}):
@@ -24,7 +27,8 @@ def download(url: str, output_file_name):
     description = output_file_name.split(slash[OS])[-1]
     try:
         # make an HTTP request within a context manager
-        response = requests.get(url, stream=True, allow_redirects=True)
+        response = requests.get(
+            url, stream=True, verify=False, timeout=20)
 
         # check header to get content length, in bytes
         total_length = int(response.headers.get("content-length", 0))
@@ -34,10 +38,16 @@ def download(url: str, output_file_name):
             for chunk in response.iter_content(chunk_size=4096):
                 fout.write(chunk)
 
+        print(f"Finished downloading `{description}`")
+
     except requests.exceptions.SSLError:
         print("SSL error occured, retrying download...")
         if path.isfile(output_file_name):
             remove(output_file_name)
         download(url, output_file_name)
 
-    print(f"Finished downloading `{description}`")
+    except requests.exceptions.Timeout:
+        print("Server timeout error occured, retrying download...")
+        if path.isfile(output_file_name):
+            remove(output_file_name)
+        download(url, output_file_name)
