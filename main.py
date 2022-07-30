@@ -15,11 +15,6 @@ class Course:
             self.course_url = self.course_url.replace('/enrolled', '')
 
         self.destination_folder = folder_location
-        if folder_location.endswith(utils.slash[utils.OS]):
-            if utils.OS == 'win':
-                self.destination_folder = folder_location[:-2]
-        else:
-            self.destination_folder = folder_location[:-1]
 
         print(utils.colored_str(Fore.YELLOW,
               string="\nInitializing download...", bold_level=Style.BRIGHT))

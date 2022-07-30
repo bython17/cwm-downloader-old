@@ -55,7 +55,7 @@ def download(url: str, output_file_name):
         print(
             f"\n    {Fore.MAGENTA}Downloading {download_type}: {Style.RESET_ALL}{description}")
         # implement progress bar via tqdm
-        with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc="", bar_format=custom_bar_format, ascii=" ━━━━━━", ncols=80) as fout:
+        with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc="", bar_format=custom_bar_format, ascii=" ━", ncols=80) as fout:
 
             for chunk in response.iter_content(chunk_size=4096):
                 fout.write(chunk)
