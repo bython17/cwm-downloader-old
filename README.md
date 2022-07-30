@@ -44,10 +44,10 @@ To get the header and cookies dictionary
 
 ## Dependencies
 
-beautifulsoup4, tqdm, requests
+beautifulsoup4, tqdm, requests, colorama
 
 ```bash
-python -m pip install beautifulsoup4 tqdm requests
+python -m pip install beautifulsoup4 tqdm requests colorama
 ```
 
 ## Running the project

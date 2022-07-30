@@ -4,9 +4,12 @@ from bs4 import BeautifulSoup
 from sys import platform
 from os import remove, path
 import urllib3.exceptions
+from colorama import Back, Fore, Style
 
 OS = platform[:3]
 slash = {'lin': '/', 'dar': '/', 'mac': '/', 'win': '\\'}
+custom_bar_format = "{desc}        %s{bar} {n_fmt}/{total_fmt} %s{rate_fmt} %seta %s{remaining}%s" % (
+    Fore.GREEN, Fore.RED, Style.RESET_ALL, Fore.CYAN, Style.RESET_ALL)
 
 # Supress the download warning that appears when not verifying an ssl certificate
 requests.packages.urllib3.disable_warnings(
@@ -18,6 +21,10 @@ def make_soup(url, headers={}, cookies={}):
     return BeautifulSoup(content.content, "html.parser")
 
 
+def colored_str(fore_color, back_color=False, string='', bold_level=""):
+    return f"{fore_color}{bold_level}{string}{Style.RESET_ALL}" if not back_color else f"{back_color}{fore_color}{bold_level}{string}{Style.RESET_ALL}"
+
+
 def save_text(text: str, output_file_name: str):
     with open(output_file_name, 'w') as file:
         file.write(text)
@@ -26,6 +33,16 @@ def save_text(text: str, output_file_name: str):
 
 def download(url: str, output_file_name):
     description = output_file_name.split(slash[OS])[-1]
+    extension_type_dict = {
+        'mp4': 'video lecture',
+        'md': 'text lecture',
+    }
+
+    try:
+        download_type = extension_type_dict[description.split('.')[-1]]
+    except:
+        download_type = 'resource'
+
     try:
         # make an HTTP request within a context manager
         response = requests.get(
@@ -34,21 +51,26 @@ def download(url: str, output_file_name):
         # check header to get content length, in bytes
         total_length = int(response.headers.get("content-length", 0))
 
+        print(
+            f"\n    {Fore.MAGENTA}Downloading {download_type}: {Style.RESET_ALL}{description}")
         # implement progress bar via tqdm
-        with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc=description) as fout:
+        with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc="", bar_format=custom_bar_format, ascii=" ━━━━━━", ncols=80) as fout:
             for chunk in response.iter_content(chunk_size=4096):
                 fout.write(chunk)
 
-        print(f"Finished downloading `{description}`")
-
     except requests.exceptions.SSLError:
-        print("SSL error occured, retrying download...")
+        print(colored_str(Fore.RED, string="SSL error, retrying download..."))
         if path.isfile(output_file_name):
             remove(output_file_name)
         download(url, output_file_name)
 
     except requests.exceptions.Timeout or urllib3.exceptions.TimeoutError:
-        print("Server timeout error occured, retrying download...")
+        print(colored_str(Fore.RED, string="Server timeout error, retrying download..."))
         if path.isfile(output_file_name):
             remove(output_file_name)
         download(url, output_file_name)
+
+
+if __name__ == "__main__":
+    download("http://ipv4.download.thinkbroadband.com/20MB.zip",
+             'Thisisadummyscriptthatplayssomethingcoollsajflsadjflsajflasjdlfjsaldfjsadfdkfhaskdfhs.zip')

@@ -1,16 +1,30 @@
 import utils
 import argparse
 from credentials import cookies, headers
+from colorama import Fore, Back, Style
+
+
+# TODO: Colorize the terminal for a better look
+# TODO: Make the md files look better or render html with css
 
 
 class Course:
     def __init__(self, url: str, folder=r'./'):
         self.course_url = url if not url.endswith('/') else url[:len(url) - 1]
+
+        if '/enrolled' in self.course_url:
+            self.course_url = self.course_url.replace('/enrolled', '')
+
         self.destination_folder = repr(
             folder)[1:-1] if not folder.endswith('\\') else repr(folder)[1:-2]
 
-        print("Initializing download...")
-        self.course_soup = utils.make_soup(self.course_url)
+        print(utils.colored_str(Fore.YELLOW,
+              string="\nInitializing download...", bold_level=Style.BRIGHT))
+
+        self.course_soup = utils.make_soup(self.course_url, headers, cookies)
+        self.course_name = self.course_soup.find(
+            'div', {'class': 'course-sidebar'}).find('h2').text.strip()
+
         lectures_li = self.course_soup.find_all("li", class_="section-item")
         self.lectures = list(
             map(lambda lect_li: lect_li.find('a'), lectures_li))
@@ -98,10 +112,17 @@ class Course:
 
     def download_lectures(self, from_lecture=0, to_lecture=-1):
         lectures = self.lectures[from_lecture:to_lecture]
+
+        print(utils.colored_str(Fore.YELLOW,
+              string=f"Downloading course:"), end=" ")
+        print(utils.colored_str(Fore.CYAN,
+              string=f"{self.course_name}", bold_level=Style.BRIGHT))
         for lecture in lectures:
             self.download_lecture(lecture.get("data-ss-lecture-id"))
-        print("\nFinished Downloading Course")
-        print(f"Files found at {self.destination_folder}")
+        print(utils.colored_str(Fore.WHITE, Back.GREEN,
+              "\nFinished Downloading Course"))
+        print(utils.colored_str(Fore.WHITE, Back.GREEN,
+              f"Files found at {self.destination_folder}"))
 
 
 if __name__ == "__main__":
