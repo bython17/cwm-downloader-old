@@ -3,6 +3,7 @@ from tqdm.auto import tqdm
 from bs4 import BeautifulSoup
 from sys import platform
 from os import remove, path
+from socket import timeout
 import urllib3.exceptions
 from colorama import Back, Fore, Style
 
@@ -55,6 +56,7 @@ def download(url: str, output_file_name):
             f"\n    {Fore.MAGENTA}Downloading {download_type}: {Style.RESET_ALL}{description}")
         # implement progress bar via tqdm
         with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc="", bar_format=custom_bar_format, ascii=" ━━━━━━", ncols=80) as fout:
+
             for chunk in response.iter_content(chunk_size=4096):
                 fout.write(chunk)
 
@@ -65,7 +67,7 @@ def download(url: str, output_file_name):
             remove(output_file_name)
         download(url, output_file_name)
 
-    except requests.exceptions.Timeout or urllib3.exceptions.TimeoutError:
+    except (requests.exceptions.Timeout, urllib3.exceptions.TimeoutError, timeout):
         print(colored_str(Fore.WHITE, Back.RED,
               string="!SERVER TIMEOUT, retrying download..."))
         if path.isfile(output_file_name):

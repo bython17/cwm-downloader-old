@@ -4,7 +4,6 @@ from credentials import cookies, headers
 from colorama import Fore, Back, Style
 
 
-# TODO: Colorize the terminal for a better look
 # TODO: Make the md files look better or render html with css
 
 
