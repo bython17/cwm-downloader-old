@@ -8,14 +8,18 @@ from colorama import Fore, Back, Style
 
 
 class Course:
-    def __init__(self, url: str, folder=r'./'):
+    def __init__(self, url: str, folder_location='./'):
         self.course_url = url if not url.endswith('/') else url[:len(url) - 1]
 
         if '/enrolled' in self.course_url:
             self.course_url = self.course_url.replace('/enrolled', '')
 
-        self.destination_folder = repr(
-            folder)[1:-1] if not folder.endswith('\\') else repr(folder)[1:-2]
+        self.destination_folder = folder_location
+        if folder_location.endswith(utils.slash[utils.OS]):
+            if utils.OS == 'win':
+                self.destination_folder = folder_location[:-2]
+        else:
+            self.destination_folder = folder_location[:-1]
 
         print(utils.colored_str(Fore.YELLOW,
               string="\nInitializing download...", bold_level=Style.BRIGHT))
@@ -110,6 +114,9 @@ class Course:
                     url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}")
 
     def download_lectures(self, from_lecture=0, to_lecture=-1):
+        if to_lecture == -1:
+            to_lecture = len(self.lectures)
+
         lectures = self.lectures[from_lecture:to_lecture]
 
         print(utils.colored_str(Fore.YELLOW,
@@ -119,9 +126,9 @@ class Course:
         for lecture in lectures:
             self.download_lecture(lecture.get("data-ss-lecture-id"))
         print(utils.colored_str(Fore.WHITE, Back.GREEN,
-              "\nFinished Downloading Course"))
+              string="\nFinished Downloading Course"))
         print(utils.colored_str(Fore.WHITE, Back.GREEN,
-              f"Files found at {self.destination_folder}"))
+              string=f"Files found at {self.destination_folder}"))
 
 
 if __name__ == "__main__":
