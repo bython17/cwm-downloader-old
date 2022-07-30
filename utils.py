@@ -59,13 +59,15 @@ def download(url: str, output_file_name):
                 fout.write(chunk)
 
     except requests.exceptions.SSLError:
-        print(colored_str(Fore.RED, string="SSL error, retrying download..."))
+        print(colored_str(Fore.WHITE, Back.RED,
+              string="!SSL ERROR, retrying download..."))
         if path.isfile(output_file_name):
             remove(output_file_name)
         download(url, output_file_name)
 
     except requests.exceptions.Timeout or urllib3.exceptions.TimeoutError:
-        print(colored_str(Fore.RED, string="Server timeout error, retrying download..."))
+        print(colored_str(Fore.WHITE, Back.RED,
+              string="!SERVER TIMEOUT, retrying download..."))
         if path.isfile(output_file_name):
             remove(output_file_name)
         download(url, output_file_name)
