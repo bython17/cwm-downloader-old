@@ -4,9 +4,10 @@ from credentials import cookies, headers
 
 
 class Course:
-    def __init__(self, url: str, folder='./'):
+    def __init__(self, url: str, folder=r'./'):
         self.course_url = url if not url.endswith('/') else url[:len(url) - 1]
-        self.destination_folder = folder
+        self.destination_folder = repr(
+            folder)[1:-1] if not folder.endswith('\\') else repr(folder)[1:-2]
 
         print("Initializing download...")
         self.course_soup = utils.make_soup(self.course_url)
@@ -17,8 +18,12 @@ class Course:
     def save_lecture_text(self, lecture_id):
         lecture_soup = self.make_lecture_soup(lecture_id)
         title = lecture_soup.find("h2", {'id': 'lecture_heading'}).text.strip()
-        content = lecture_soup.find(
-            "div", {'class': 'lecture-text-container'}).text.strip()
+
+        try:
+            content = lecture_soup.find(
+                "div", {'class': 'lecture-text-container'}).text.strip()
+        except AttributeError:
+            content = ''
 
         return f'{title} \n\n{content}'
 
@@ -32,24 +37,30 @@ class Course:
             map(lambda el: el.strip(), lecture.text.strip().splitlines()))))
 
         # Remove numbers from the name
-        lecture_title = lecture_title_list[0].split('-')[1]
+        lecture_title = '- '.join(lecture_title_list[0].split('-')[1:])
 
         return lecture_title
 
     def get_resource_title(self, lecture_id):
         lecture_soup = self.make_lecture_soup(lecture_id)
-        resource_title = lecture_soup.find('a', class_='download').text.strip()
+        resource_title = lecture_soup.find_all('a', class_='download')
+        resource_title = list(
+            map(lambda res: res.text.strip(), resource_title))
+
         return resource_title
 
     def make_lecture_soup(self, lecture_id):
         lecture_url = f'{self.course_url}/lectures/{lecture_id}'
         return utils.make_soup(lecture_url, headers=headers, cookies=cookies)
 
-    def get_lecture_download_url(self, lecture_id):
+    def get_lecture_download_url(self, lecture_id, multiple=False):
         lecture_soup = self.make_lecture_soup(lecture_id)
-        lecture_download_url = lecture_soup.find(
-            'a', class_="download").get("href")
-        return lecture_download_url
+        lecture_download_urls = lecture_soup.find_all(
+            'a', class_="download")
+        lecture_download_urls = list(
+            map(lambda aTags: aTags.get("href"), lecture_download_urls))
+
+        return lecture_download_urls[0] if not multiple else lecture_download_urls
 
     def check_if_video(self, lecture_id):
         lecture_soup = self.make_lecture_soup(lecture_id)
@@ -68,19 +79,22 @@ class Course:
             utils.download(
                 download_url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4")
         else:
-            lecture_text = self.save_lecture_text(lecture_id)
-            utils.save_text(
-                lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.md")
-
-            # Download resource if available
             try:
-                resource_name = self.get_resource_title(lecture_id)
-                resource_download_url = self.get_lecture_download_url(
-                    lecture_id)
-                utils.download(
-                    resource_download_url, f"{self.destination_folder}{utils.slash[utils.OS]}Resource- {resource_name}")
+                lecture_text = self.save_lecture_text(lecture_id)
+                utils.save_text(
+                    lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.md")
             except:
                 pass
+
+            # Download resource if available
+            resource_names = self.get_resource_title(lecture_id)
+
+            resource_download_url = self.get_lecture_download_url(
+                lecture_id, multiple=True)
+
+            for (url, name) in zip(resource_download_url, resource_names):
+                utils.download(
+                    url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}")
 
     def download_lectures(self, from_lecture=0, to_lecture=-1):
         lectures = self.lectures[from_lecture:to_lecture]
