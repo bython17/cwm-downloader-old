@@ -1,7 +1,7 @@
 import utils
 import argparse
 from credentials import cookies, headers
-from colorama import Fore, Back, Style
+from colorama import Fore, Style
 
 
 # TODO: Make the md files look better or render html with css
@@ -27,10 +27,8 @@ class Course:
         self.lectures = list(
             map(lambda lect_li: lect_li.find('a'), lectures_li))
 
-    def save_lecture_text(self, lecture_id):
-        lecture_soup = self.make_lecture_soup(lecture_id)
+    def save_lecture_text(self, lecture_soup):
         title = lecture_soup.find("h2", {'id': 'lecture_heading'}).text.strip()
-
         try:
             content = lecture_soup.find(
                 "div", {'class': 'lecture-text-container'}).text.strip()
@@ -53,8 +51,7 @@ class Course:
 
         return lecture_title
 
-    def get_resource_title(self, lecture_id):
-        lecture_soup = self.make_lecture_soup(lecture_id)
+    def get_resource_title(self, lecture_soup):
         resource_title = lecture_soup.find_all('a', class_='download')
         resource_title = list(
             map(lambda res: res.text.strip(), resource_title))
@@ -65,8 +62,7 @@ class Course:
         lecture_url = f'{self.course_url}/lectures/{lecture_id}'
         return utils.make_soup(lecture_url, headers=headers, cookies=cookies)
 
-    def get_lecture_download_url(self, lecture_id, multiple=False):
-        lecture_soup = self.make_lecture_soup(lecture_id)
+    def get_lecture_download_url(self, lecture_soup, multiple=False):
         lecture_download_urls = lecture_soup.find_all(
             'a', class_="download")
         lecture_download_urls = list(
@@ -74,8 +70,7 @@ class Course:
 
         return lecture_download_urls[0] if not multiple else lecture_download_urls
 
-    def check_if_video(self, lecture_id):
-        lecture_soup = self.make_lecture_soup(lecture_id)
+    def check_if_video(self, lecture_soup):
         heading = lecture_soup.find('h2', {'id': 'lecture_heading'})
         icon = heading.find('use', {'xlink:href': '#icon__Video'})
 
@@ -90,31 +85,32 @@ class Course:
         lecture_number = self.lectures.index(
             self.get_lecture_by_id(lecture_id)) + 1
         lecture_name = f"{lecture_number}-{self.get_lecture_title(lecture_id)}"
+        lecture_soup = self.make_lecture_soup(lecture_id)
 
-        if self.check_if_video(lecture_id):
+        if self.check_if_video(lecture_soup):
             download_urls = self.get_lecture_download_url(
-                lecture_id, multiple=True)
+                lecture_soup, multiple=True)
             utils.download(
                 download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4")
 
             if len(download_urls) > 1:
-                resource_names = self.get_resource_title(lecture_id)
+                resource_names = self.get_resource_title(lecture_soup)
                 resource_names = resource_names[1:]
                 resource_download_urls = download_urls[1:]
                 self.download_resources(
                     resource_download_urls, resource_names, lecture_number)
         else:
             try:
-                lecture_text = self.save_lecture_text(lecture_id)
+                lecture_text = self.save_lecture_text(lecture_soup)
                 utils.save_text(
                     lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.md")
             except:
                 pass
             # Download resource if available
-            resource_names = self.get_resource_title(lecture_id)
+            resource_names = self.get_resource_title(lecture_soup)
 
             resource_download_urls = self.get_lecture_download_url(
-                lecture_id, multiple=True)
+                lecture_soup, multiple=True)
 
             self.download_resources(
                 resource_download_urls, resource_names, lecture_number)

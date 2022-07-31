@@ -24,8 +24,8 @@ def make_soup(url, headers={}, cookies={}):
                                cookies=cookies, timeout=60)
         return BeautifulSoup(content.content, "html.parser")
     except Exception as e:
-        handle_error(f"UKNOWN ERROR(utils.make_soup): {e}", 5, True, callback=make_soup,
-                     url=url, headers=headers, cookies=cookies)
+        return handle_error(f"UKNOWN ERROR(utils.make_soup): {e}", 5, True, callback=make_soup,
+                            url=url, headers=headers, cookies=cookies)
 
 
 def colored_str(fore_color, back_color=False, string='', bold_level=""):
@@ -35,7 +35,8 @@ def colored_str(fore_color, back_color=False, string='', bold_level=""):
 def save_text(text: str, output_file_name: str):
     with open(output_file_name, 'w') as file:
         file.write(text)
-    print(f"Finished downloading `{output_file_name.split(slash[OS])[-1]}`")
+    print(
+        f"\n    {Fore.MAGENTA}Finished downloading: {Style.RESET_ALL}{output_file_name.split(slash[OS])[-1]}")
 
 
 def download(url: str, output_file_name):
@@ -95,7 +96,7 @@ def handle_error(err, delay, retry=True, callback=download, **kwargs):
                       string=f"!{err}, {retry_donwload_text}..."))
     if retry:
         sleep(delay)
-        callback(**kwargs)
+        return callback(**kwargs)
 
 
 if __name__ == "__main__":
