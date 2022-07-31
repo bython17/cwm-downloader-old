@@ -81,15 +81,28 @@ class Course:
 
         return True if icon is not None else False
 
+    def download_resources(self, resource_urls, resource_names, lecture_number):
+        for (url, name) in zip(resource_urls, resource_names):
+            utils.download(
+                url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}")
+
     def download_lecture(self, lecture_id):
         lecture_number = self.lectures.index(
             self.get_lecture_by_id(lecture_id)) + 1
         lecture_name = f"{lecture_number}-{self.get_lecture_title(lecture_id)}"
 
         if self.check_if_video(lecture_id):
-            download_url = self.get_lecture_download_url(lecture_id)
+            download_urls = self.get_lecture_download_url(
+                lecture_id, multiple=True)
             utils.download(
-                download_url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4")
+                download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4")
+            try:
+                resource_names = self.get_resource_title(lecture_id)
+                resource_download_urls = download_urls[1:]
+                self.download_resources(resource_names, download_urls)
+            except:
+                pass
+
         else:
             try:
                 lecture_text = self.save_lecture_text(lecture_id)
@@ -97,16 +110,13 @@ class Course:
                     lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.md")
             except:
                 pass
-
             # Download resource if available
             resource_names = self.get_resource_title(lecture_id)
 
-            resource_download_url = self.get_lecture_download_url(
+            resource_download_urls = self.get_lecture_download_url(
                 lecture_id, multiple=True)
 
-            for (url, name) in zip(resource_download_url, resource_names):
-                utils.download(
-                    url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}")
+            self.download_resources(resource_names, resource_download_urls)
 
     def download_lectures(self, from_lecture=0, to_lecture=-1):
         if to_lecture == -1:
@@ -128,7 +138,7 @@ class Course:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="CWM Downloader",
+        prog="cwm-downloader",
         description="Download courses from Mosh Hamedani")
 
     parser.add_argument('-c', '--courseUrl',
