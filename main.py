@@ -96,13 +96,13 @@ class Course:
                 lecture_id, multiple=True)
             utils.download(
                 download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4")
-            try:
-                resource_names = self.get_resource_title(lecture_id)
-                resource_download_urls = download_urls[1:]
-                self.download_resources(resource_names, download_urls)
-            except:
-                pass
 
+            if len(download_urls) > 1:
+                resource_names = self.get_resource_title(lecture_id)
+                resource_names = resource_names[1:]
+                resource_download_urls = download_urls[1:]
+                self.download_resources(
+                    resource_download_urls, resource_names, lecture_number)
         else:
             try:
                 lecture_text = self.save_lecture_text(lecture_id)
@@ -116,7 +116,8 @@ class Course:
             resource_download_urls = self.get_lecture_download_url(
                 lecture_id, multiple=True)
 
-            self.download_resources(resource_names, resource_download_urls)
+            self.download_resources(
+                resource_names, resource_download_urls, lecture_number)
 
     def download_lectures(self, from_lecture=0, to_lecture=-1):
         if to_lecture == -1:
@@ -130,9 +131,9 @@ class Course:
               string=f"{self.course_name}", bold_level=Style.BRIGHT))
         for lecture in lectures:
             self.download_lecture(lecture.get("data-ss-lecture-id"))
-        print(utils.colored_str(Fore.WHITE, Back.GREEN,
+        print(utils.colored_str(Fore.GREEN,
               string="\nFinished Downloading Course"))
-        print(utils.colored_str(Fore.WHITE, Back.GREEN,
+        print(utils.colored_str(Fore.WHITE,
               string=f"Files found at {self.destination_folder}"))
 
 

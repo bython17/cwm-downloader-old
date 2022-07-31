@@ -2,7 +2,7 @@ import requests
 from tqdm.auto import tqdm
 from bs4 import BeautifulSoup
 from sys import platform
-from os import remove, path
+from os import path
 from time import sleep
 from socket import gaierror
 import urllib3.exceptions
@@ -19,8 +19,13 @@ requests.packages.urllib3.disable_warnings(
 
 
 def make_soup(url, headers={}, cookies={}):
-    content = requests.get(url, headers=headers, cookies=cookies)
-    return BeautifulSoup(content.content, "html.parser")
+    try:
+        content = requests.get(url, headers=headers,
+                               cookies=cookies, timeout=60)
+        return BeautifulSoup(content.content, "html.parser")
+    except Exception as e:
+        handle_error(f"UKNOWN ERROR(utils.make_soup): {e}", 5, True, callback=make_soup,
+                     url=url, headers=headers, cookies=cookies)
 
 
 def colored_str(fore_color, back_color=False, string='', bold_level=""):
@@ -31,18 +36,6 @@ def save_text(text: str, output_file_name: str):
     with open(output_file_name, 'w') as file:
         file.write(text)
     print(f"Finished downloading `{output_file_name.split(slash[OS])[-1]}`")
-
-
-def handle_error(err, delay, url, output_file_name, retry=True):
-    retry_donwload_text = "retrying download" if retry else 'canceling download'
-    if delay and retry:
-        retry_donwload_text += f' after {delay}s'
-
-    print(colored_str(Fore.WHITE, Back.RED,
-                      string=f"!{err}, {retry_donwload_text}..."))
-    if retry:
-        sleep(delay)
-        download(url, output_file_name)
 
 
 def download(url: str, output_file_name):
@@ -85,9 +78,21 @@ def download(url: str, output_file_name):
     except gaierror as e:
         handle_error(f"NETWORK ERROR: {e}", 0,
                      url, output_file_name, retry=False)
-
     except Exception as e:
-        handle_error(f"UNKNOWN ERROR: {e}", 0, url, output_file_name)
+        handle_error(
+            f"UNKNOWN ERROR(utils.download): {e}", 0, url, output_file_name)
+
+
+def handle_error(err, delay, retry=True, callback=download, **kwargs):
+    retry_donwload_text = "retrying download" if retry else 'canceling download'
+    if delay and retry:
+        retry_donwload_text += f' after {delay}s'
+
+    print(colored_str(Fore.WHITE, Back.RED,
+                      string=f"!{err}, {retry_donwload_text}..."))
+    if retry:
+        sleep(delay)
+        callback(**kwargs)
 
 
 if __name__ == "__main__":
