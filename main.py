@@ -117,7 +117,7 @@ class Course:
                 lecture_id, multiple=True)
 
             self.download_resources(
-                resource_names, resource_download_urls, lecture_number)
+                resource_download_urls, resource_names, lecture_number)
 
     def download_lectures(self, from_lecture=0, to_lecture=-1):
         if to_lecture == -1:
