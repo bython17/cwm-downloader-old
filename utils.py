@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from sys import platform
 from os import remove, path
 from time import sleep
+from socket import gaierror
 import urllib3.exceptions
 from colorama import Back, Fore, Style
 
@@ -32,14 +33,18 @@ def save_text(text: str, output_file_name: str):
     print(f"Finished downloading `{output_file_name.split(slash[OS])[-1]}`")
 
 
-def retry_download(err, delay, url, output_file_name):
-    timeout_seconds = delay
+def handle_error(err, delay, url, output_file_name, retry=True):
+    retry_donwload_text = "retrying download" if retry else 'canceling download'
+    if delay and retry:
+        retry_donwload_text += f' after {delay}s'
+
     print(colored_str(Fore.WHITE, Back.RED,
-                      string=f"!{err}, retrying download after {timeout_seconds}s..."))
-    if path.isfile(output_file_name):
-        remove(output_file_name)
-    sleep(timeout_seconds)
-    download(url, output_file_name)
+                      string=f"!{err}, {retry_donwload_text}..."))
+    if retry:
+        if path.isfile(output_file_name):
+            remove(output_file_name)
+        sleep(delay)
+        download(url, output_file_name)
 
 
 def download(url: str, output_file_name):
@@ -57,7 +62,7 @@ def download(url: str, output_file_name):
     try:
         # make an HTTP request within a context manager
         response = requests.get(
-            url, stream=True, verify=False, timeout=120)
+            url, stream=True, verify=False, timeout=60)
 
         # check header to get content length, in bytes
         total_length = int(response.headers.get("content-length", 0))
@@ -71,11 +76,12 @@ def download(url: str, output_file_name):
                 fout.write(chunk)
 
     except requests.exceptions.SSLError:
-        print(colored_str(Fore.WHITE, Back.RED,
-              string="!SSL ERROR, retrying download..."))
-        if path.isfile(output_file_name):
-            remove(output_file_name)
-        download(url, output_file_name)
+        # print(colored_str(Fore.WHITE, Back.RED,
+        #       string="!SSL ERROR, retrying download..."))
+        # if path.isfile(output_file_name):
+        #     remove(output_file_name)
+        # download(url, output_file_name)
+        handle_error('SSL ERROR', 0, url, output_file_name)
 
     except (requests.exceptions.Timeout, urllib3.exceptions.TimeoutError, requests.exceptions.ReadTimeout):
         # timeout_seconds = 5
@@ -85,7 +91,14 @@ def download(url: str, output_file_name):
         #     remove(output_file_name)
         # sleep(timeout_seconds)
         # download(url, output_file_name)
-        retry_download("SERVER TIMEOUT", 5, url, output_file_name)
+        handle_error("SERVER TIMEOUT", 0, url, output_file_name)
+
+    except requests.exceptions.ConnectionError:
+        handle_error("CONNECTION ERROR", 5, url, output_file_name)
+
+    except gaierror as e:
+        handle_error(f"NETWORK ERROR: {e}", 0,
+                     url, output_file_name, retry=False)
 
     except Exception as e:
         # print(colored_str(Fore.WHITE, Back.RED,
@@ -93,7 +106,7 @@ def download(url: str, output_file_name):
         # if path.isfile(output_file_name):
         #     remove(output_file_name)
         # download(url, output_file_name)
-        retry_download(f"UNKNOWN ERROR: {e}", 5, url, output_file_name)
+        handle_error(f"UNKNOWN ERROR: {e}", 0, url, output_file_name)
 
 
 if __name__ == "__main__":
