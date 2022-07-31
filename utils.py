@@ -41,8 +41,6 @@ def handle_error(err, delay, url, output_file_name, retry=True):
     print(colored_str(Fore.WHITE, Back.RED,
                       string=f"!{err}, {retry_donwload_text}..."))
     if retry:
-        if path.isfile(output_file_name):
-            remove(output_file_name)
         sleep(delay)
         download(url, output_file_name)
 
@@ -76,21 +74,9 @@ def download(url: str, output_file_name):
                 fout.write(chunk)
 
     except requests.exceptions.SSLError:
-        # print(colored_str(Fore.WHITE, Back.RED,
-        #       string="!SSL ERROR, retrying download..."))
-        # if path.isfile(output_file_name):
-        #     remove(output_file_name)
-        # download(url, output_file_name)
         handle_error('SSL ERROR', 0, url, output_file_name)
 
     except (requests.exceptions.Timeout, urllib3.exceptions.TimeoutError, requests.exceptions.ReadTimeout):
-        # timeout_seconds = 5
-        # print(colored_str(Fore.WHITE, Back.RED,
-        #       string=f"!SERVER TIMEOUT, retrying download after {timeout_seconds}s..."))
-        # if path.isfile(output_file_name):
-        #     remove(output_file_name)
-        # sleep(timeout_seconds)
-        # download(url, output_file_name)
         handle_error("SERVER TIMEOUT", 0, url, output_file_name)
 
     except requests.exceptions.ConnectionError:
@@ -101,11 +87,6 @@ def download(url: str, output_file_name):
                      url, output_file_name, retry=False)
 
     except Exception as e:
-        # print(colored_str(Fore.WHITE, Back.RED,
-        #       string=f"!UNKNOWN ERROR: {e}, retrying download..."))
-        # if path.isfile(output_file_name):
-        #     remove(output_file_name)
-        # download(url, output_file_name)
         handle_error(f"UNKNOWN ERROR: {e}", 0, url, output_file_name)
 
 
