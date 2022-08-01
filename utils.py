@@ -18,6 +18,15 @@ requests.packages.urllib3.disable_warnings(
     category=urllib3.exceptions.InsecureRequestWarning)
 
 
+def does_overwrite(file):
+    response = input(colored_str(Fore.YELLOW, False, bold_level=Style.DIM,
+                     string=f'\n!WARNING: The file "{file}" already exists. Do you want to repace it? (y,n):') + ' ').lower()
+    if response in ['yes', 'y', 'ofcourse']:
+        return True
+    else:
+        return False
+
+
 def make_soup(url, headers={}, cookies={}, get_content=False):
     try:
         content = requests.get(url, headers=headers,
@@ -33,15 +42,23 @@ def colored_str(fore_color, back_color=False, string='', bold_level=""):
     return f"{fore_color}{bold_level}{string}{Style.RESET_ALL}" if not back_color else f"{back_color}{fore_color}{bold_level}{string}{Style.RESET_ALL}"
 
 
-def save_text(text: str, output_file_name: str):
+def save_text(text: str, output_file_name: str, recursed=False):
     output_file_name = path.expanduser(output_file_name)
-    with open(output_file_name, 'w') as file:
-        file.write(text)
-    print(
-        f"\n    {Fore.MAGENTA}Finished downloading: {Style.RESET_ALL}{output_file_name.split(slash[OS])[-1]}")
+    description = output_file_name.split(slash[OS])[-1]
+
+    if not path.isfile(output_file_name) or recursed:
+        with open(output_file_name, 'w') as file:
+            file.write(text)
+        print(
+            f"\n    {Fore.MAGENTA}Finished downloading: {Style.RESET_ALL}{description}")
+    else:
+        if does_overwrite(description):
+            save_text(text, output_file_name, True)
+        else:
+            return
 
 
-def download(url: str, output_file_name):
+def download(url: str, output_file_name, recursed=False):
     output_file_name = path.expanduser(output_file_name)
 
     description = output_file_name.split(slash[OS])[-1]
@@ -56,20 +73,26 @@ def download(url: str, output_file_name):
         download_type = 'resource'
 
     try:
-        # make an HTTP request within a context manager
-        response = requests.get(
-            url, stream=True, verify=False, timeout=60)
+        if not path.isfile(output_file_name) or recursed:
+            # make an HTTP request within a context manager
+            response = requests.get(
+                url, stream=True, verify=False, timeout=60)
 
-        # check header to get content length, in bytes
-        total_length = int(response.headers.get("content-length", 0))
+            # check header to get content length, in bytes
+            total_length = int(response.headers.get("content-length", 0))
 
-        print(
-            f"\n    {Fore.MAGENTA}Downloading {download_type}: {Style.RESET_ALL}{description}")
-        # implement progress bar via tqdm
-        with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc="", bar_format=custom_bar_format, ascii=" ━", ncols=80) as fout:
+            print(
+                f"\n    {Fore.MAGENTA}Downloading {download_type}: {Style.RESET_ALL}{description}")
+            # implement progress bar via tqdm
+            with tqdm.wrapattr(open(output_file_name, 'wb'), "write", miniters=1, total=total_length, desc="", bar_format=custom_bar_format, ascii=" ━", ncols=80) as fout:
 
-            for chunk in response.iter_content(chunk_size=4096):
-                fout.write(chunk)
+                for chunk in response.iter_content(chunk_size=4096):
+                    fout.write(chunk)
+        else:
+            if does_overwrite(description):
+                download(url, output_file_name, True)
+            else:
+                return
 
     except requests.exceptions.SSLError:
         handle_error('SSL ERROR', 0, True, callback=download,

@@ -77,7 +77,7 @@ class Course:
             utils.download(
                 url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}")
 
-    def download_lecture(self, lecture_id):
+    def download_lecture(self, lecture_id, no_confirm=False):
         lecture_number = self.lectures.index(
             self.get_lecture_by_id(lecture_id)) + 1
         lecture_name = f"{lecture_number}-{self.get_lecture_title(lecture_id)}"
@@ -87,7 +87,7 @@ class Course:
             download_urls = self.get_lecture_download_url(
                 lecture_soup, multiple=True)
             utils.download(
-                download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4")
+                download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", no_confirm)
 
             if len(download_urls) > 1:
                 resource_names = self.get_resource_title(lecture_soup)
@@ -99,7 +99,7 @@ class Course:
             markup = lec_text.get_main_element(lecture_soup, lecture_number)
             lecture_text = lec_text.create_html(lecture_name, markup)
             utils.save_text(
-                lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.html")
+                lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.html", no_confirm)
 
             # Download resource if available
             resource_names = self.get_resource_title(lecture_soup)
@@ -110,7 +110,7 @@ class Course:
             self.download_resources(
                 resource_download_urls, resource_names, lecture_number)
 
-    def download_lectures(self, from_lecture=0, to_lecture=-1):
+    def download_lectures(self, from_lecture=0, to_lecture=-1, no_confirm=False):
         if to_lecture == -1:
             to_lecture = len(self.lectures)
 
@@ -121,7 +121,8 @@ class Course:
         print(utils.colored_str(Fore.CYAN,
               string=f"{self.course_name}", bold_level=Style.BRIGHT))
         for lecture in lectures:
-            self.download_lecture(lecture.get("data-ss-lecture-id"))
+            self.download_lecture(lecture.get(
+                "data-ss-lecture-id"), no_confirm)
         print(utils.colored_str(Fore.GREEN,
               string="\nFinished Downloading Course"))
         print(utils.colored_str(Fore.WHITE,
@@ -144,11 +145,14 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--destinationDir', default="./",
                         help="The final destination folder (if in windows make sure to double the `\`)")
     parser.add_argument('--version', action='version', version='%(prog)s 2.0')
+    parser.add_argument('--noConfirm', default=False, dest='no_confirm',
+                        action=argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
 
     course = Course(args.courseUrl, args.destinationDir)
     if args.lectureId:
-        course.download_lecture(args.lectureId)
+        course.download_lecture(args.lectureId, args.no_confirm)
     else:
-        course.download_lectures(args.fromIndex - 1, args.toIndex)
+        course.download_lectures(
+            args.fromIndex - 1, args.toIndex, args.no_confirm)
