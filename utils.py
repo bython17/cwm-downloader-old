@@ -18,11 +18,12 @@ requests.packages.urllib3.disable_warnings(
     category=urllib3.exceptions.InsecureRequestWarning)
 
 
-def make_soup(url, headers={}, cookies={}):
+def make_soup(url, headers={}, cookies={}, get_content=False):
     try:
         content = requests.get(url, headers=headers,
                                cookies=cookies, timeout=60)
-        return BeautifulSoup(content.content, "html.parser")
+
+        return BeautifulSoup(content.content, "html.parser") if not get_content else content
     except Exception as e:
         return handle_error(f"UKNOWN ERROR(utils.make_soup): {e}", 5, True, callback=make_soup,
                             url=url, headers=headers, cookies=cookies)
@@ -33,6 +34,7 @@ def colored_str(fore_color, back_color=False, string='', bold_level=""):
 
 
 def save_text(text: str, output_file_name: str):
+    output_file_name = path.expanduser(output_file_name)
     with open(output_file_name, 'w') as file:
         file.write(text)
     print(
@@ -40,6 +42,8 @@ def save_text(text: str, output_file_name: str):
 
 
 def download(url: str, output_file_name):
+    output_file_name = path.expanduser(output_file_name)
+
     description = output_file_name.split(slash[OS])[-1]
     extension_type_dict = {
         'mp4': 'video lecture',

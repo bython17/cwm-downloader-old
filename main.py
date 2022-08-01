@@ -1,7 +1,9 @@
 import utils
 import argparse
+from sys import exit
 from credentials import cookies, headers
 from colorama import Fore, Style
+import lecture_text as lec_text
 
 
 # TODO: Make the md files look better or render html with css
@@ -27,18 +29,12 @@ class Course:
         self.lectures = list(
             map(lambda lect_li: lect_li.find('a'), lectures_li))
 
-    def save_lecture_text(self, lecture_soup):
-        title = lecture_soup.find("h2", {'id': 'lecture_heading'}).text.strip()
-        try:
-            content = lecture_soup.find(
-                "div", {'class': 'lecture-text-container'}).text.strip()
-        except AttributeError:
-            content = ''
-
-        return f'{title} \n\n{content}'
-
     def get_lecture_by_id(self, lecture_id):
-        return list(filter(lambda lect_a: lect_a.get("data-ss-lecture-id") == lecture_id, self.lectures))[0]
+        try:
+            return list(filter(lambda lect_a: lect_a.get("data-ss-lecture-id") == lecture_id, self.lectures))[0]
+        except IndexError:
+            print("Specified ID is not found in the course")
+            exit()
 
     def get_lecture_title(self, lecture_id):
         lecture = self.get_lecture_by_id(lecture_id)
@@ -100,12 +96,11 @@ class Course:
                 self.download_resources(
                     resource_download_urls, resource_names, lecture_number)
         else:
-            try:
-                lecture_text = self.save_lecture_text(lecture_soup)
-                utils.save_text(
-                    lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.md")
-            except:
-                pass
+            markup = lec_text.get_main_element(lecture_soup, lecture_number)
+            lecture_text = lec_text.create_html(lecture_name, markup)
+            utils.save_text(
+                lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.html")
+
             # Download resource if available
             resource_names = self.get_resource_title(lecture_soup)
 
