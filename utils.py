@@ -96,22 +96,22 @@ def download(url: str, output_file_name, recursed=False):
 
     except requests.exceptions.SSLError:
         handle_error('SSL ERROR', 0, True, callback=download,
-                     url=url, output_file_name=output_file_name)
+                     url=url, output_file_name=output_file_name, recursed=True)
 
     except (requests.exceptions.Timeout, urllib3.exceptions.TimeoutError, requests.exceptions.ReadTimeout):
         handle_error("SERVER TIMEOUT", 0, True, callback=download,
-                     url=url, output_file_name=output_file_name)
+                     url=url, output_file_name=output_file_name, recursed=True)
 
     except requests.exceptions.ConnectionError:
         handle_error("CONNECTION ERROR", 5, True, callback=download,
-                     url=url, output_file_name=output_file_name)
+                     url=url, output_file_name=output_file_name, recursed=True)
 
     except gaierror as e:
         handle_error(f"NETWORK ERROR: {e}", 0,
-                     True, callback=download, url=url, output_file_name=output_file_name, retry=False)
+                     True, callback=download, url=url, output_file_name=output_file_name, recursed=True)
     except Exception as e:
         handle_error(
-            f"UNKNOWN ERROR(utils.download): {e}", 0, True, callback=download, url=url, output_file_name=output_file_name)
+            f"UNKNOWN ERROR(utils.download): {e}", 0, True, callback=download, url=url, output_file_name=output_file_name, recursed=True)
 
 
 def handle_error(err, delay, retry=True, callback=download, **kwargs):
