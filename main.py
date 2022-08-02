@@ -10,7 +10,7 @@ import lecture_text as lec_text
 
 
 class Course:
-    def __init__(self, url: str, folder_location='./'):
+    def __init__(self, url: str, folder_location='./', timeout=60, no_confirm=False):
         self.course_url = url if not url.endswith('/') else url[:len(url) - 1]
 
         if '/enrolled' in self.course_url:
@@ -21,7 +21,11 @@ class Course:
         print(utils.colored_str(Fore.YELLOW,
               string="\nInitializing download...", bold_level=Style.BRIGHT))
 
-        self.course_soup = utils.make_soup(self.course_url, headers, cookies)
+        self.timeout = timeout
+        self.no_confirm = no_confirm
+
+        self.course_soup = utils.make_soup(
+            self.course_url, headers, cookies, timeout=self.timeout)
         self.course_name = self.course_soup.find(
             'div', {'class': 'course-sidebar'}).find('h2').text.strip()
 
@@ -59,7 +63,7 @@ class Course:
 
     def make_lecture_soup(self, lecture_id):
         lecture_url = f'{self.course_url}/lectures/{lecture_id}'
-        return utils.make_soup(lecture_url, headers=headers, cookies=cookies)
+        return utils.make_soup(lecture_url, headers=headers, cookies=cookies, timeout=self.timeout)
 
     def get_lecture_download_url(self, lecture_soup, multiple=False):
         lecture_download_urls = lecture_soup.find_all(
@@ -80,7 +84,7 @@ class Course:
             utils.download(
                 url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}")
 
-    def download_lecture(self, lecture_id, no_confirm=False):
+    def download_lecture(self, lecture_id):
         lecture_number = self.lectures.index(
             self.get_lecture_by_id(lecture_id)) + 1
         lecture_name = f"{lecture_number}-{self.get_lecture_title(lecture_id)}"
@@ -90,7 +94,7 @@ class Course:
             download_urls = self.get_lecture_download_url(
                 lecture_soup, multiple=True)
             utils.download(
-                download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", no_confirm)
+                download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", self.no_confirm, self.timeout)
 
             if len(download_urls) > 1:
                 resource_names = self.get_resource_title(lecture_soup)
@@ -102,7 +106,7 @@ class Course:
             markup = lec_text.get_main_element(lecture_soup, lecture_number)
             lecture_text = lec_text.create_html(lecture_name, markup)
             utils.save_text(
-                lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.html", no_confirm)
+                lecture_text, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.html", self.no_confirm)
 
             # Download resource if available
             resource_names = self.get_resource_title(lecture_soup)
@@ -113,7 +117,7 @@ class Course:
             self.download_resources(
                 resource_download_urls, resource_names, lecture_number)
 
-    def download_lectures(self, from_lecture=0, to_lecture=-1, no_confirm=False):
+    def download_lectures(self, from_lecture=0, to_lecture=-1):
         if to_lecture == -1:
             to_lecture = len(self.lectures)
 
@@ -125,7 +129,7 @@ class Course:
               string=f"{self.course_name}", bold_level=Style.BRIGHT))
         for lecture in lectures:
             self.download_lecture(lecture.get(
-                "data-ss-lecture-id"), no_confirm)
+                "data-ss-lecture-id"))
         print(utils.colored_str(Fore.GREEN,
               string="\nFinished Downloading Course"))
         print(utils.colored_str(Fore.WHITE,
@@ -150,12 +154,15 @@ if __name__ == "__main__":
     parser.add_argument('--version', action='version', version='%(prog)s 2.0')
     parser.add_argument('--noconfirm', default=False, dest='no_confirm',
                         help="Disables confirmation of file replacements", action=argparse.BooleanOptionalAction)
+    parser.add_argument('--timeout', default=60, type=int,
+                        help='The time to wait for network to respond before retrying(for slower connections use a greater timeout)')
 
     args = parser.parse_args()
 
-    course = Course(args.courseUrl, args.destinationDir)
+    course = Course(args.courseUrl, args.destinationDir,
+                    args.timeout, args.no_confirm)
     if args.lectureId:
-        course.download_lecture(args.lectureId, args.no_confirm)
+        course.download_lecture(args.lectureId)
     else:
         course.download_lectures(
-            args.fromIndex - 1, args.toIndex, args.no_confirm)
+            args.fromIndex - 1, args.toIndex)

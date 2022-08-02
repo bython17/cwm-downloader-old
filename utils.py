@@ -27,10 +27,10 @@ def does_overwrite(file):
         return False
 
 
-def make_soup(url, headers={}, cookies={}, get_content=False):
+def make_soup(url, headers={}, cookies={}, get_content=False, timeout=60):
     try:
         content = requests.get(url, headers=headers,
-                               cookies=cookies, timeout=60)
+                               cookies=cookies, timeout=timeout)
 
         return BeautifulSoup(content.content, "html.parser") if not get_content else content
     except Exception as e:
@@ -58,7 +58,7 @@ def save_text(text: str, output_file_name: str, recursed=False):
             return
 
 
-def download(url: str, output_file_name, recursed=False):
+def download(url: str, output_file_name, recursed=False, timeout=60):
     output_file_name = path.expanduser(output_file_name)
 
     description = output_file_name.split(slash[OS])[-1]
@@ -76,7 +76,7 @@ def download(url: str, output_file_name, recursed=False):
         if not path.isfile(output_file_name) or recursed:
             # make an HTTP request within a context manager
             response = requests.get(
-                url, stream=True, verify=False, timeout=60)
+                url, stream=True, verify=False, timeout=timeout)
 
             # check header to get content length, in bytes
             total_length = int(response.headers.get("content-length", 0))
