@@ -70,9 +70,13 @@ def get_main_element(lecture_soup, lecture_number):
     main_element.find('div', {'class': 'attachment-data'}).decompose()
 
     title = main_element.find('h2', {'class': 'section-title'}).text
+
     title_list = title.split('-')
-    title_list[0] = str(lecture_number)
-    new_title = '-'.join(title_list)
+    if title_list[0].isdigit():
+        title_list[0] = str(lecture_number)
+        new_title = '-'.join(title_list)
+    else:
+        new_title = f"{lecture_number}- {title}"
 
     main_element.find('h2', {'class': 'section-title'}).string = new_title
 

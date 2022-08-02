@@ -145,8 +145,8 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--destinationDir', default="./",
                         help="The final destination folder (if in windows make sure to double the `\`)")
     parser.add_argument('--version', action='version', version='%(prog)s 2.0')
-    parser.add_argument('--noConfirm', default=False, dest='no_confirm',
-                        action=argparse.BooleanOptionalAction)
+    parser.add_argument('--noconfirm', default=False, dest='no_confirm',
+                        help="Disables confirmation of file replacements", action=argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
 
