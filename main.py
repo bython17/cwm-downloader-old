@@ -43,7 +43,10 @@ class Course:
             map(lambda el: el.strip(), lecture.text.strip().splitlines()))))
 
         # Remove numbers from the name
-        lecture_title = '- '.join(lecture_title_list[0].split('-')[1:])
+        if lecture_title_list[0].split('-')[0].isdigit():
+            lecture_title = '- '.join(lecture_title_list[0].split('-')[1:])
+        else:
+            lecture_title = f" {lecture_title_list[0]}"
 
         return lecture_title
 
