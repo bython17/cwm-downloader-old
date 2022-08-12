@@ -10,7 +10,7 @@ import lecture_text as lec_text
 
 
 class Course:
-    def __init__(self, url: str, folder_location='./', timeout=60, no_confirm=False):
+    def __init__(self, url: str, folder_location='.', timeout=60, no_confirm=False):
         self.course_url = url if not url.endswith('/') else url[:len(url) - 1]
 
         if '/enrolled' in self.course_url:
@@ -52,14 +52,14 @@ class Course:
         else:
             lecture_title = f" {lecture_title_list[0]}"
 
-        return lecture_title
+        return lecture_title.strip('?')
 
     def get_resource_title(self, lecture_soup):
         resource_title = lecture_soup.find_all('a', class_='download')
         resource_title = list(
             map(lambda res: res.text.strip(), resource_title))
 
-        return resource_title
+        return resource_title.strip('?')
 
     def make_lecture_soup(self, lecture_id):
         lecture_url = f'{self.course_url}/lectures/{lecture_id}'
@@ -150,7 +150,7 @@ if __name__ == "__main__":
                         help="Start index of download")
     parser.add_argument('--toIndex', default=-1, type=int,
                         help="End index of download")
-    parser.add_argument('-d', '--destinationDir', default="./",
+    parser.add_argument('-d', '--destinationDir', default=".",
                         help="The final destination folder (if in windows make sure to double the `\`)")
     parser.add_argument('--version', action='version', version='%(prog)s 2.0')
     parser.add_argument('--noconfirm', default=False, dest='no_confirm',
