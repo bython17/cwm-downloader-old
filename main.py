@@ -93,15 +93,16 @@ class Course:
         if self.check_if_video(lecture_soup):
             download_urls = self.get_lecture_download_url(
                 lecture_soup, multiple=True)
-            utils.download(
-                download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", self.no_confirm, self.timeout)
+            if len(download_urls):
+                utils.download(
+                    download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", self.no_confirm, self.timeout)
 
-            if len(download_urls) > 1:
-                resource_names = self.get_resource_title(lecture_soup)
-                resource_names = resource_names[1:]
-                resource_download_urls = download_urls[1:]
-                self.download_resources(
-                    resource_download_urls, resource_names, lecture_number)
+                if len(download_urls) > 1:
+                    resource_names = self.get_resource_title(lecture_soup)
+                    resource_names = resource_names[1:]
+                    resource_download_urls = download_urls[1:]
+                    self.download_resources(
+                        resource_download_urls, resource_names, lecture_number)
         else:
             markup = lec_text.get_main_element(lecture_soup, lecture_number)
             lecture_text = lec_text.create_html(lecture_name, markup)
