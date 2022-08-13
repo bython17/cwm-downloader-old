@@ -78,6 +78,8 @@ def download(url: str, output_file_name, recursed=False, timeout=60):
             response = requests.get(
                 url, stream=True, verify=False, timeout=timeout)
 
+            response.raise_for_status()
+
             # check header to get content length, in bytes
             total_length = int(response.headers.get("content-length", 0))
 
@@ -107,11 +109,11 @@ def download(url: str, output_file_name, recursed=False, timeout=60):
                      url=url, output_file_name=output_file_name, recursed=True)
 
     except gaierror as e:
-        handle_error(f"NETWORK ERROR: {e}", 0,
+        handle_error(f"NETWORK ERROR: {e}", 5,
                      True, callback=download, url=url, output_file_name=output_file_name, recursed=True)
     except Exception as e:
         handle_error(
-            f"UNKNOWN ERROR(utils.download): {e}", 0, True, callback=download, url=url, output_file_name=output_file_name, recursed=True)
+            f"UNKNOWN ERROR(utils.download): {e}", 5, True, callback=download, url=url, output_file_name=output_file_name, recursed=True)
 
 
 def handle_error(err, delay, retry=True, callback=download, **kwargs):
@@ -127,5 +129,5 @@ def handle_error(err, delay, retry=True, callback=download, **kwargs):
 
 
 if __name__ == "__main__":
-    download("http://ipv4.download.thinkbroadband.com/20MB.zip",
+    download("http://ipv4.download.thinkbroadband.com/5MB.zip",
              'Thisisadummyscriptthatplayssomethingcoollsajflsadjflsajflasjdlfjsaldfjsadfdkfhaskdfhs.zip')
