@@ -1,2 +1,5 @@
 credentials.py
 __pycache__/
+build/
+dist/
+*.spec
