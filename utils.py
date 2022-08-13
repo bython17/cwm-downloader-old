@@ -1,3 +1,4 @@
+from urllib import request
 import requests
 from tqdm.auto import tqdm
 from bs4 import BeautifulSoup
@@ -91,28 +92,28 @@ def download(url: str, output_file_name, request_session, recursed=False, timeou
                     fout.write(chunk)
         else:
             if does_overwrite(description):
-                download(url, output_file_name, recursed=True)
+                download(url, output_file_name, request_session, recursed=True)
             else:
                 return
 
     except requests.exceptions.SSLError:
         handle_error('SSL ERROR', 0, True, callback=download,
-                     url=url, output_file_name=output_file_name, recursed=True)
+                     url=url, output_file_name=output_file_name, request_session=request_session, recursed=True)
 
     except (requests.exceptions.Timeout, urllib3.exceptions.TimeoutError, requests.exceptions.ReadTimeout):
         handle_error("SERVER TIMEOUT", 0, True, callback=download,
-                     url=url, output_file_name=output_file_name, recursed=True)
+                     url=url, output_file_name=output_file_name, request_session=request_session, recursed=True)
 
     except requests.exceptions.ConnectionError:
         handle_error("CONNECTION ERROR", 5, True, callback=download,
-                     url=url, output_file_name=output_file_name, recursed=True)
+                     url=url, output_file_name=output_file_name, request_session=request_session, recursed=True)
 
     except gaierror as e:
         handle_error(f"NETWORK ERROR: {e}", 5,
-                     True, callback=download, url=url, output_file_name=output_file_name, recursed=True)
+                     True, callback=download, url=url, output_file_name=output_file_name, request_session=request_session, recursed=True)
     except Exception as e:
         handle_error(
-            f"UNKNOWN ERROR(utils.download): {e}", 5, True, callback=download, url=url, output_file_name=output_file_name, recursed=True)
+            f"UNKNOWN ERROR(utils.download): {e}", 5, True, callback=download, url=url, output_file_name=output_file_name, request_session=request_session, recursed=True)
 
 
 def handle_error(err, delay, retry=True, callback=download, **kwargs):
@@ -125,8 +126,3 @@ def handle_error(err, delay, retry=True, callback=download, **kwargs):
     if retry:
         sleep(delay)
         return callback(**kwargs)
-
-
-if __name__ == "__main__":
-    download("http://ipv4.download.thinkbroadband.com/5MB.zip",
-             'Thisisadummyscriptthatplayssomethingcoollsajflsadjflsajflasjdlfjsaldfjsadfdkfhaskdfhs.zip')
