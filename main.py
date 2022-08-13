@@ -91,7 +91,7 @@ class Course:
     def download_resources(self, resource_urls, resource_names, lecture_number):
         for (url, name) in zip(resource_urls, resource_names):
             utils.download(
-                url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}", self.request_session, self.no_confirm, self.timeout)
+                url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}", self.request_session, recursed=self.no_confirm, timeout=self.timeout)
 
     def download_lecture(self, lecture_id):
         lecture_number = self.lectures.index(
@@ -104,7 +104,7 @@ class Course:
                 lecture_soup, multiple=True)
             if len(download_urls):
                 utils.download(
-                    download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", self.request_session, self.no_confirm, self.timeout)
+                    download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", self.request_session, recursed=self.no_confirm, timeout=self.timeout)
 
                 if len(download_urls) > 1:
                     resource_names = self.get_resource_title(lecture_soup)

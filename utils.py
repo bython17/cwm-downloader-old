@@ -57,7 +57,7 @@ def save_text(text: str, output_file_name: str, recursed=False):
             return
 
 
-def download(url: str, output_file_name, request_session, recursed=False, timeout=60):
+def download(url: str, output_file_name, request_session, recursed=False, timeout=60,):
     output_file_name = path.expanduser(output_file_name)
 
     description = output_file_name.split(slash[OS])[-1]
@@ -91,7 +91,7 @@ def download(url: str, output_file_name, request_session, recursed=False, timeou
                     fout.write(chunk)
         else:
             if does_overwrite(description):
-                download(url, output_file_name, True)
+                download(url, output_file_name, recursed=True)
             else:
                 return
 
