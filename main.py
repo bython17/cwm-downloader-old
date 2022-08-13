@@ -1,4 +1,6 @@
 import utils
+import requests
+from requests.utils import cookiejar_from_dict
 import argparse
 from sys import exit
 from credentials import cookies, headers
@@ -11,6 +13,13 @@ import lecture_text as lec_text
 
 class Course:
     def __init__(self, url: str, folder_location='.', timeout=60, no_confirm=False):
+        # Creating a request session
+        self.request_session = requests.Session()
+
+        cookie_jar = cookiejar_from_dict(cookies)
+        self.request_session.cookies = cookie_jar
+        self.request_session.headers = headers
+
         self.course_url = url if not url.endswith('/') else url[:len(url) - 1]
 
         if '/enrolled' in self.course_url:
@@ -25,7 +34,7 @@ class Course:
         self.no_confirm = no_confirm
 
         self.course_soup = utils.make_soup(
-            self.course_url, headers, cookies, timeout=self.timeout)
+            self.course_url, self.request_session, timeout=self.timeout)
         self.course_name = self.course_soup.find(
             'div', {'class': 'course-sidebar'}).find('h2').text.strip()
 
@@ -63,7 +72,7 @@ class Course:
 
     def make_lecture_soup(self, lecture_id):
         lecture_url = f'{self.course_url}/lectures/{lecture_id}'
-        return utils.make_soup(lecture_url, headers=headers, cookies=cookies, timeout=self.timeout)
+        return utils.make_soup(lecture_url, self.request_session, timeout=self.timeout)
 
     def get_lecture_download_url(self, lecture_soup, multiple=False):
         lecture_download_urls = lecture_soup.find_all(
@@ -82,7 +91,7 @@ class Course:
     def download_resources(self, resource_urls, resource_names, lecture_number):
         for (url, name) in zip(resource_urls, resource_names):
             utils.download(
-                url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}", self.no_confirm, self.timeout)
+                url, f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_number}- Resource- {name}", self.request_session, self.no_confirm, self.timeout)
 
     def download_lecture(self, lecture_id):
         lecture_number = self.lectures.index(
@@ -95,7 +104,7 @@ class Course:
                 lecture_soup, multiple=True)
             if len(download_urls):
                 utils.download(
-                    download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", self.no_confirm, self.timeout)
+                    download_urls[0], f"{self.destination_folder}{utils.slash[utils.OS]}{lecture_name}.mp4", self.request_session, self.no_confirm, self.timeout)
 
                 if len(download_urls) > 1:
                     resource_names = self.get_resource_title(lecture_soup)

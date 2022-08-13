@@ -27,15 +27,14 @@ def does_overwrite(file):
         return False
 
 
-def make_soup(url, headers={}, cookies={}, get_content=False, timeout=60):
+def make_soup(url, request_session, get_content=False, timeout=60):
     try:
-        content = requests.get(url, headers=headers,
-                               cookies=cookies, timeout=timeout)
+        content = request_session.get(url, timeout=timeout)
 
         return BeautifulSoup(content.content, "html.parser") if not get_content else content
     except Exception as e:
         return handle_error(f"UKNOWN ERROR(utils.make_soup): {e}", 5, True, callback=make_soup,
-                            url=url, headers=headers, cookies=cookies)
+                            url=url, request_session=request_session, timeout=timeout)
 
 
 def colored_str(fore_color, back_color=False, string='', bold_level=""):
@@ -58,7 +57,7 @@ def save_text(text: str, output_file_name: str, recursed=False):
             return
 
 
-def download(url: str, output_file_name, recursed=False, timeout=60):
+def download(url: str, output_file_name, request_session, recursed=False, timeout=60):
     output_file_name = path.expanduser(output_file_name)
 
     description = output_file_name.split(slash[OS])[-1]
@@ -75,8 +74,8 @@ def download(url: str, output_file_name, recursed=False, timeout=60):
     try:
         if not path.isfile(output_file_name) or recursed:
             # make an HTTP request within a context manager
-            response = requests.get(
-                url, stream=True, verify=False, timeout=timeout)
+            response = request_session.get(
+                url, stream=True, timeout=timeout)
 
             response.raise_for_status()
 
