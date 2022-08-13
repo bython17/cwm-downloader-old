@@ -68,7 +68,7 @@ class Course:
         resource_title = list(
             map(lambda res: res.text.strip(), resource_title))
 
-        return resource_title.strip('?')
+        return [res.strip('?') for res in resource_title]
 
     def make_lecture_soup(self, lecture_id):
         lecture_url = f'{self.course_url}/lectures/{lecture_id}'
