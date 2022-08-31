@@ -1,3 +1,5 @@
+❗There is a new version of the app that provides the same functionality use: https://github.com/bython17/cwm-downloader from now on.
+
 ## Code with Mosh Course Downloader
 
 This project is created for people that bought a course from https://codewithmosh.com and want to download a single lecture or a whole course just using the command line
